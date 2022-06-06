@@ -38,6 +38,19 @@ func GetFileContent(url string, filepath string) error {
 	return cmd.Run()
 }
 
+//export HashFileContents
+func HashFileContents(data *C.char) *C.char {
+	dataArray := C.GoString(data)
+	var out string = "hpsm="
+	hashLocal := proc.GetLineHashesFromSource(dataArray)
+
+	for i := range hashLocal {
+		a := fmt.Sprintf("%02x", hashLocal[i])
+		out += a
+	}
+	return C.CString(out)
+}
+
 //export HPSM
 func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 	dataArray := C.GoString(data)
@@ -58,6 +71,8 @@ func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 	ossLinesGo := ""
 	totalLines := len(crcSource)
 	snippets := localProcessHPSM(crcSource, MD5, 5)
+	//replace the above line if API processing is needed
+	//snippets := remoteProcessHPSM(crcSource, MD5, 5)
 	matchedLines := 0
 	for i := range snippets {
 		var ossRange string
@@ -153,8 +168,6 @@ func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model
 	GetFileContent("https://osskb.org/api/file_contents/"+MD5, "/tmp/"+MD5)
 	hashRemote := proc.GetLineHashes("/tmp/" + MD5)
 	u.Rm("/tmp/" + MD5)
-	//hashRemote := proc.GetLineHashes("/tmp/04d93973aafdb9e2b3474546378a9085")
-
 	return proc.Compare(local, hashRemote, uint32(5))
 
 }

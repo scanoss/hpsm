@@ -14,6 +14,7 @@ func Check(e error) {
 		panic(e)
 	}
 }
+
 func GetLineHashes(fileName string) []uint8 {
 	src, err := os.ReadFile(fileName)
 	Check(err)
