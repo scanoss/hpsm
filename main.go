@@ -4,42 +4,48 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 
 	proc "scanoss.com/hpsm/pkg"
 )
 
 func main() {
-	hashLocal := proc.GetLineHashes("modified.txt")
-	//hashRemote := proc.GetLineHashes("remote.c")
-	/*fmt.Println(hashLocal)
-	fmt.Println(hashRemote)*/
-
-	//proc.Compare(hashLocal, hashRemote)
-	for i := range hashLocal {
-		fmt.Printf("%d, ", hashLocal[i])
+	if len(os.Args) < 2 {
+		fmt.Println("scan <hash|wfp> <filename>")
+		fmt.Println("Available command")
+		fmt.Println("hash : get lines hashes in one line from file")
+		fmt.Println("wfp  : Fingerprints the file and adds the hash line")
 	}
-
-}
-
-func Distance(local uint32, remote uint32) uint32 {
-	if local == 0xFFFFFFFF && remote == 0xFFFFFFFF {
-		return 32
-	}
-	aux := local ^ remote
-	/*sum := aux & 0x000000FF
-	aux = aux >> 8
-	sum = aux & 0x000000FF
-	aux = aux >> 8
-	sum = aux & 0x000000FF
-	aux = aux >> 8
-	sum = aux & 0x000000FF
-	*/
-	var dist uint32 = 0
-	for i := 0; i < 32; i++ {
-		if (aux & 0x00000001) == 0x00000001 {
-			dist++
+	if os.Args[1] == "hash" {
+		hashLocal := proc.GetLineHashes(os.Args[2])
+		fmt.Print("hpsm=")
+		for i := range hashLocal {
+			fmt.Printf("%02x", hashLocal[i])
 		}
-		aux = aux >> 1
+		os.Exit(0)
 	}
-	return dist
+	if os.Args[1] == "wfp" {
+		cmd := exec.Command("scanoss-py", "wfp", os.Args[2])
+		aux, _ := cmd.Output()
+
+		lines := strings.Split(string(aux), "\n")
+		out := lines[0] + "\n"
+
+		// Unmarshall results
+		hashLocal := proc.GetLineHashes(os.Args[2])
+		out += ("hpsm=")
+		for i := range hashLocal {
+			out += fmt.Sprintf("%02x", hashLocal[i])
+		}
+		out += "\n"
+		for j := 1; j < len(lines); j++ {
+			out += lines[j] + "\n"
+		}
+		fmt.Println(out)
+
+		os.Exit(0)
+	}
+
 }

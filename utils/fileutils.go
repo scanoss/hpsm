@@ -118,3 +118,22 @@ func Curl_HPSM(url string, req string) string {
 	// TODO: check err
 	return ""
 }
+
+func RequestHPSM(url string, req string) []byte {
+
+	reader := strings.NewReader(req)
+	request, err := http.NewRequest("POST", url+"/v2/adjust", reader)
+	request.Header.Add("accept", "application/json")
+	request.Header.Add("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(request)
+	_ = err
+	if err == nil {
+
+		defer resp.Body.Close()
+		body, _ := ioutil.ReadAll(resp.Body)
+		return body
+	}
+	// TODO: check err
+	return nil
+}

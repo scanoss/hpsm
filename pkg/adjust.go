@@ -112,7 +112,7 @@ func getSnippetsStarting(line uint32, localHashes []uint8, remoteHashes []uint8,
 				snippet.LEnd = int(i) - 1
 				snippet.RStart = int(remotes[l])
 				snippet.REnd = int(j) - 1
-				fmt.Println("genera snippet", l)
+				//	fmt.Println("genera snippet", l)
 				err = 0
 				return snippet, 0
 			}
@@ -127,9 +127,9 @@ func getSnippetsStarting(line uint32, localHashes []uint8, remoteHashes []uint8,
 
 }
 
-func Compare(local []uint8, remote []uint8,  Threshold uint32) []model.Range {
+func Compare(local []uint8, remote []uint8, Threshold uint32) []model.Range {
 	var ranges []model.Range
-	if(Threshold==0) {
+	if Threshold == 0 {
 		Threshold = 5
 	}
 	remoteMap := make(map[uint8][]uint32)
@@ -159,7 +159,7 @@ func Compare(local []uint8, remote []uint8,  Threshold uint32) []model.Range {
 	for j = 0; j < len(local); {
 		a, err := getSnippetsStarting(uint32(j), local, remote, remoteMap, Threshold)
 		if err == 0 {
-			fmt.Println(a)
+			//fmt.Println(a)
 			ranges = append(ranges, a)
 			j = a.LEnd + 1
 		} else {
