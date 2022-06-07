@@ -12,6 +12,14 @@ import (
 )
 
 func main() {
+	/*local := "Line0\nLine1\nLine2\nLine3\nLine4\nLine5\n"
+	remote := "Line1\nLine0\nLine1\nLine2\nLine3\nLine4\nLine 6\nLine7\nLine0\nLine1\nLine2\nLine3\nLine4\nLine5"
+	hashLocal := proc.GetLineHashesFromSource(local)
+	hashRemote := proc.GetLineHashesFromSource(remote)
+	r := proc.Compare(hashLocal, hashRemote, 4)
+	fmt.Println(r)
+	os.Exit(0)
+	*/
 	if len(os.Args) < 2 {
 		fmt.Println("scan <hash|wfp> <filename>")
 		fmt.Println("Available command")

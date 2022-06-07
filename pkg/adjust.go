@@ -106,16 +106,16 @@ func getSnippetsStarting(line uint32, localHashes []uint8, remoteHashes []uint8,
 			//	fmt.Println("corto ", (int(i) < len(localHashes)), (int(j) < len(remoteHashes)), (localHashes[i] == remoteHashes[j]), localHashes[i], remoteHashes[j])
 			//fmt.Println(localHashes[i-1], remoteHashes[j-1], "-", localHashes[i], remoteHashes[j])
 
-			if int(i-localStart) > int(snippet.LEnd-snippet.LStart) {
+			if int(i-localStart) >= int(snippet.LEnd-snippet.LStart) {
 				//genera un rango
 
 				snippet.LStart = int(localStart)
 				snippet.LEnd = int(i) - 1
 				snippet.RStart = int(remotes[l])
 				snippet.REnd = int(j) - 1
-				//	fmt.Println("genera snippet", l)
+				//fmt.Println("reemplaza rango", l)
 				err = 0
-				return snippet, 0
+				//return snippet, 0
 			}
 		} else {
 			//	fmt.Println("No llega a generar", i-localStart)
