@@ -26,11 +26,15 @@ import (
 go build -o libhpsm.so  -buildmode=c-shared libhpsm.go
 gcc -v client.c -o client ./libhpsm.so
 */
+// Go_HandleData converts a unsigned char [] C array to an array
+// of GO bytes
 
 func Go_handleData(data *C.uchar, length C.int) []byte {
 	return C.GoBytes(unsafe.Pointer(data), C.int(length))
 }
 
+// Get the file contents of a given url name and place it on
+// file
 func GetFileContent(url string, filepath string) error {
 	// run shell `wget URL -O filepath`
 

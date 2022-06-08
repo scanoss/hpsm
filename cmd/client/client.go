@@ -12,6 +12,9 @@ import (
 	u "scanoss.com/hpsm/utils"
 )
 
+// ResultJson struct defines the structure for the
+// results of a scanning process on SCANOSS platform
+//
 type ResultJson struct {
 	Key         string   `json:"key,omitempty,omitempty"`
 	ID          string   `json:"id,omitempty"`
