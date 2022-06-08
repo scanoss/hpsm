@@ -92,7 +92,12 @@ func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 		}
 
 	}
-	mLines := fmt.Sprintf("%d%%", matchedLines*100/totalLines)
+	mLines := ""
+	if totalLines == 0 {
+		mLines = fmt.Sprint("0%")
+	} else {
+		mLines = fmt.Sprintf("%d%%", matchedLines*100/totalLines)
+	}
 	var lines C.struct_ranges
 	lines.local = ((*C.char)(C.CString(strLinesGo)))
 	lines.remote = ((*C.char)(C.CString(ossLinesGo)))
