@@ -12,6 +12,7 @@ import "C"
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"unsafe"
@@ -174,7 +175,11 @@ func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model
 	//Remote access to API
 
 	MD5 := remoteMd5
-	GetFileContent("https://osskb.org/api/file_contents/"+MD5, "/tmp/"+MD5)
+	srcEndpoint := os.Getenv("SRC_URL")
+	if srcEndpoint == "" {
+		srcEndpoint = "https://osskb.org/api/file_contents/"
+	}
+	GetFileContent(srcEndpoint+MD5, "/tmp/"+MD5)
 	hashRemote := proc.GetLineHashes("/tmp/" + MD5)
 	u.Rm("/tmp/" + MD5)
 	return proc.Compare(local, hashRemote, uint32(5))

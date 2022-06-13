@@ -45,9 +45,9 @@ func main() {
 
 	if len(os.Args) < 2 {
 		fmt.Println("Available command")
-		fmt.Println("hash <filename>: get lines hashes in one line from file")
-		fmt.Println("wfp  <filename>: Fingerprints the file and adds the hash line")
-		fmt.Println("compare <localFile> <remoteFile|md5> [MD5]: Compare <localFile> against <remoteFile> or with <MD5>. MD5 flag should be included")
+		fmt.Println("hash <filename>: gets line hashes in one line from file")
+		fmt.Println("wfp  <filename>: Fingerprints the file and adds the hpsm= line")
+		fmt.Println("compare <localFile> <remoteFile|md5> [MD5]: Compares <localFile> against <remoteFile> or with remote <MD5>.")
 		os.Exit(1)
 	}
 	if os.Args[1] == "hash" {
@@ -83,9 +83,14 @@ func main() {
 
 		//setColor(2)
 		var remote []byte
-
-		if len(os.Args) == 5 && os.Args[4] == "MD5" {
-			utils.Wget("https://osskb.org/api/file_contents/"+os.Args[3], "/tmp/"+os.Args[3])
+		var md5Int [2]uint
+		matched, _ := fmt.Sscanf(os.Args[3], "%16x%16x", &md5Int[0], &md5Int[1])
+		if matched == 2 {
+			srcEndpoint := os.Getenv("SRC_URL")
+			if srcEndpoint == "" {
+				srcEndpoint = "https://osskb.org/api/file_contents/"
+			}
+			utils.Wget(srcEndpoint+os.Args[3], "/tmp/"+os.Args[3])
 			remote, _ = os.ReadFile("/tmp/" + os.Args[3])
 			utils.Rm("/tmp/" + os.Args[3])
 		} else {
