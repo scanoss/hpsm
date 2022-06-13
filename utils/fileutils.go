@@ -11,21 +11,17 @@ import (
 
 func Wget(url string, filepath string) error {
 	// run shell `wget URL -O filepath`
-	fmt.Printf("downloading %s -> %s\n", url, filepath)
+	//fmt.Printf("downloading %s -> %s\n", url, filepath)
 	cmd := exec.Command("wget", url, "-O", filepath)
-	//	cmd.Stdout = os.Stdout
-	//cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 func Mkdir(path string) error {
-	// run shell `wget URL -O filepath`
 	cmd := exec.Command("mkdir", "-p", path)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 func Rm(file string) error {
-	// run shell `wget URL -O filepath`
 	cmd := exec.Command("rm", file)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -35,8 +31,6 @@ func Rm(file string) error {
 func Unzip(path string, dest string) error {
 	cmd := exec.Command("unzip", "-PSecret", "-n", path+"/master.zip", "-d", dest)
 	fmt.Printf("Extacting %s\n", path)
-	//cmd.Stdout = os.Stdout
-	//cmd.Stderr = os.Stderr
 	return cmd.Run()
 
 }
