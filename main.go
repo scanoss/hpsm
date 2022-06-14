@@ -110,24 +110,24 @@ func main() {
 		for r := range ranges {
 			cls()
 			setColor(4)
-			gotoxy(0, 10)
-			fmt.Print("LOCAL SOURCE CODE")
-			gotoxy(0, 90)
-			fmt.Print("OSS SOURCE CODE")
+			gotoxy(0, 0)
+			fmt.Print("LINE\tCRC\tLOCAL SOURCE CODE: " + os.Args[2])
+			gotoxy(0, 80)
+			fmt.Print("LINE\tCRC\tLOCAL REMOTE CODE: " + os.Args[3])
 			y = 2
 			setColor(2)
 			for l := -4; l < 0; l++ {
 				gotoxy(y, 0)
 				xL := l + ranges[r].LStart
 				if xL > 0 && xL < len(linesSrc) {
-					fmt.Print(xL, "\t", trimLine(linesSrc[xL], 30))
+					fmt.Print(xL, "\t", hashLocal[xL], "\t", trimLine(linesSrc[xL], 30))
 				} else {
 					fmt.Print("\t", "[NO LINE]")
 				}
 				gotoxy(y, 80)
 				xR := l + ranges[r].RStart
 				if xR > 0 && xR < len(linesRemote)-1 {
-					fmt.Print(xR, "\t", trimLine(linesRemote[xR], 30))
+					fmt.Print(xR, "\t", hashRemote[xR], "\t", trimLine(linesRemote[xR], 30))
 				} else {
 					fmt.Print("\t", "[NO LINE]")
 				}
@@ -137,9 +137,9 @@ func main() {
 			setColor(3)
 			for l := 0; l < (ranges[r].LEnd - ranges[r].LStart); l++ {
 				gotoxy(y, 0)
-				fmt.Print(l+ranges[r].LStart, "\t", trimLine(linesSrc[l+ranges[r].LStart], 30))
+				fmt.Print(l+ranges[r].LStart, "\t", hashLocal[l+ranges[r].LStart], "\t", trimLine(linesSrc[l+ranges[r].LStart], 30))
 				gotoxy(y, 80)
-				fmt.Print(l+ranges[r].RStart, "\t", trimLine(linesRemote[l+ranges[r].RStart], 30))
+				fmt.Print(l+ranges[r].RStart, "\t", hashRemote[l+ranges[r].RStart], "\t", trimLine(linesRemote[l+ranges[r].RStart], 30))
 				fmt.Println()
 				y++
 			}
@@ -148,14 +148,14 @@ func main() {
 				gotoxy(y, 0)
 				xL := l + ranges[r].LEnd
 				if xL > 0 && xL < len(linesSrc) {
-					fmt.Print(xL, "\t", trimLine(linesSrc[xL], 30))
+					fmt.Print(xL, "\t", hashLocal[xL], "\t", trimLine(linesSrc[xL], 30))
 				} else {
 					fmt.Print("[NO LINE]")
 				}
 				gotoxy(y, 80)
 				xR := l + ranges[r].REnd
 				if xR > 0 && xR < len(linesRemote)-1 {
-					fmt.Print(xR, "\t", trimLine(linesRemote[xR], 30))
+					fmt.Print(xR, "\t", hashRemote[xR], "\t", trimLine(linesRemote[xR], 30))
 				} else {
 					fmt.Print("[NO LINE]")
 				}
