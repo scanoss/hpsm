@@ -19,7 +19,7 @@ The functionality is available by:
 ## Remote Files
 By default, files from *"https://osskb.org/api/file_contents/"* are retrieved. If other sources server is used, the environmental variable **SRC_URL** must be used. Eg:
   
- ``export  SRC_URL=https://osskb.org/api/file_contents/"``
+ ``export  SRC_URL=https://osskb.org/api/file_contents/``
 
   ## Building
  A makefile is provided to automate the building process
