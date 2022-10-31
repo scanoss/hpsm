@@ -1,7 +1,6 @@
 package process
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -59,7 +58,7 @@ func GetLineHashesFromSource(src string) []uint8 {
 
 func Normalize(line string) string {
 
-	var out string
+	var out string = ""
 
 	for i := 0; i < len(line); i++ {
 		if (line[i] >= '0' && line[i] <= '9') || (line[i] >= 'a' && line[i] <= 'z') {
@@ -67,12 +66,7 @@ func Normalize(line string) string {
 		} else if line[i] >= 'A' && line[i] <= 'Z' {
 			out += strings.ToLower(string(line[i]))
 		}
-		if line[i] == '\n' {
-			if i == 0 {
-				fmt.Println("salto")
-			}
-			break
-		}
+
 	}
 	return out
 

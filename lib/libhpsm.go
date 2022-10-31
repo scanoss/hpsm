@@ -39,7 +39,7 @@ func Go_handleData(data *C.uchar, length C.int) []byte {
 func GetFileContent(url string, filepath string) error {
 	// run shell `wget URL -O filepath`
 
-	cmd := exec.Command("wget", url, "-O", filepath)
+	cmd := exec.Command("wget", url, "-O", filepath, "-T", "10")
 	return cmd.Run()
 }
 
@@ -179,10 +179,14 @@ func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model
 	if srcEndpoint == "" {
 		srcEndpoint = "https://osskb.org/api/file_contents/"
 	}
-	GetFileContent(srcEndpoint+MD5, "/tmp/"+MD5)
-	hashRemote := proc.GetLineHashes("/tmp/" + MD5)
-	u.Rm("/tmp/" + MD5)
-	return proc.Compare(local, hashRemote, uint32(5))
+	err := GetFileContent(srcEndpoint+MD5, "/tmp/"+MD5)
+	if err == nil {
+		hashRemote := proc.GetLineHashes("/tmp/" + MD5)
+		u.Rm("/tmp/" + MD5)
+		return proc.Compare(local, hashRemote, uint32(5))
+	} else {
+		return []model.Range{}
+	}
 
 }
 
