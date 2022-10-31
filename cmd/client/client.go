@@ -59,7 +59,7 @@ type ProcessJob struct {
 }
 
 func Wget(url string, filepath string) error {
-	cmd := exec.Command("wget", url, "-O", filepath)
+	cmd := exec.Command("wget", url, "-O", filepath, "-T", "10")
 	return cmd.Run()
 }
 

@@ -12,7 +12,7 @@ import (
 func Wget(url string, filepath string) error {
 	// run shell `wget URL -O filepath`
 	//fmt.Printf("downloading %s -> %s\n", url, filepath)
-	cmd := exec.Command("wget", url, "-O", filepath)
+	cmd := exec.Command("wget", url, "-O", filepath, "-T", "10")
 	return cmd.Run()
 }
 func Mkdir(path string) error {
@@ -40,8 +40,6 @@ func Mz_Decompress(path string) (string, error) {
 	Mkdir("/tmp/scanoss/")
 	cmd.Dir = ("/tmp/scanoss/")
 	fmt.Printf("Extacting %s\n", path)
-	//cmd.Stdout = os.Stdout
-	//cmd.Stderr = os.Stderr
 	return "/tmp/scanoss/", cmd.Run()
 
 }
@@ -68,7 +66,7 @@ func Get_Files(path string) []string {
 	var ret []string
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		// error handling
+		fmt.Println("Error on stat of ", path)
 	}
 
 	if fileInfo.IsDir() {
@@ -116,7 +114,7 @@ func Curl_HPSM(url string, req string) string {
 func RequestHPSM(url string, req string) []byte {
 
 	reader := strings.NewReader(req)
-	request, err := http.NewRequest("POST", url+"/v2/adjust", reader)
+	request, _ := http.NewRequest("POST", url+"/v2/adjust", reader)
 	request.Header.Add("accept", "application/json")
 	request.Header.Add("Content-Type", "application/json")
 	client := &http.Client{}
