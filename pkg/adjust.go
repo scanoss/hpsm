@@ -8,38 +8,39 @@ import (
 	model "scanoss.com/hpsm/model"
 )
 
-func Check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
+// Hashes a file
+// Calculates CRC-8 of each line contained on a file
 func GetLineHashes(fileName string) []uint8 {
 	src, err := os.ReadFile(fileName)
-	Check(err)
 	var srcChk []uint8
 
-	table := crc8.MakeTable(crc8.CRC8_MAXIM)
+	if err == nil {
 
-	linesSrc := strings.Split(string(src), "\n")
-	for line := range linesSrc {
-		if linesSrc[line] == "" {
-			srcChk = append(srcChk, 0xFF)
-			continue
+		table := crc8.MakeTable(crc8.CRC8_MAXIM)
+
+		linesSrc := strings.Split(string(src), "\n")
+		for line := range linesSrc {
+			if linesSrc[line] == "" {
+				srcChk = append(srcChk, 0xFF)
+				continue
+			}
+			checksum := crc8.Checksum([]byte(Normalize(linesSrc[line])), table)
+			srcChk = append(srcChk, checksum)
 		}
-		checksum := crc8.Checksum([]byte(Normalize(linesSrc[line])), table)
-		srcChk = append(srcChk, checksum)
 	}
 	return srcChk
+
 }
 
+// Hashes a file
+// Calculates CRC-8 of each line contained on a source code string
 func GetLineHashesFromSource(src string) []uint8 {
 
 	var srcChk []uint8
 
 	table := crc8.MakeTable(crc8.CRC8_MAXIM)
-
 	linesSrc := strings.Split(string(src), "\n")
+
 	for line := range linesSrc {
 		if linesSrc[line] == "" {
 			srcChk = append(srcChk, 0xFF)
@@ -47,7 +48,6 @@ func GetLineHashesFromSource(src string) []uint8 {
 		}
 		checksum := crc8.Checksum([]byte(Normalize(linesSrc[line])), table)
 		srcChk = append(srcChk, checksum)
-
 	}
 	return srcChk
 }
@@ -55,7 +55,6 @@ func GetLineHashesFromSource(src string) []uint8 {
 // Normalize the line
 // It will remove any character that is not a letter or a
 // number included spaces, line feeds and tabs
-
 func Normalize(line string) string {
 
 	var out string = ""
@@ -66,7 +65,6 @@ func Normalize(line string) string {
 		} else if line[i] >= 'A' && line[i] <= 'Z' {
 			out += strings.ToLower(string(line[i]))
 		}
-
 	}
 	return out
 
@@ -99,9 +97,8 @@ func getSnippetsStarting(line uint32, localHashes []uint8, remoteHashes []uint8,
 				snippet.RStart = int(remotes[l])
 				snippet.REnd = int(j) - 1
 				err = 0
-				//return snippet, 0
+
 			}
-		} else {
 		}
 		l++
 	}

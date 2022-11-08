@@ -75,31 +75,35 @@ func main() {
 	// Run scanoss CLI
 	cmd := exec.Command("scanoss-py", "scan", os.Args[1], "-T", "20")
 	aux, err := cmd.Output()
-	// Unmarshall results
-	err = json.Unmarshal(aux, &x)
 	if err != nil {
-		log.Println(err)
-	}
-	var req []m.HpsmReqItem
-	// From the results, create a list of files to be HPSM
-	for key, val := range x {
-		var job ProcessJob
-		job.Result = val
-		job.key = key
-		for j := range val {
-			if val[j].ID == "snippet" {
-				var item m.HpsmReqItem
-				item.MD5 = val[j].FileHash
-				item.Hashes = hashing.GetLineHashes(os.Args[1] + key)
-				req = append(req, item)
+		// Unmarshall results
+		err = json.Unmarshal(aux, &x)
+		if err != nil {
+			log.Println(err)
+		}
+		var req []m.HpsmReqItem
+		// From the results, create a list of files to be HPSM
+		for key, val := range x {
+			var job ProcessJob
+			job.Result = val
+			job.key = key
+			for j := range val {
+				if val[j].ID == "snippet" {
+					var item m.HpsmReqItem
+					item.MD5 = val[j].FileHash
+					item.Hashes = hashing.GetLineHashes(os.Args[1] + key)
+					req = append(req, item)
+				}
 			}
 		}
+		// Create the HPSM Req JSON
+		out, _ := json.Marshal(req)
+		//Request HPSM via CURL
+		hpsm := u.Curl_HPSM("http://ns3193417.ip-152-228-225.eu:8081", string(out))
+		//return scan results + HPSM
+		fmt.Printf("{\"results\":%s\n,\"HPSM\": %s}", string(aux), hpsm)
+	} else {
+		fmt.Println("scanoss-py not detected or have no permissions")
 	}
-	// Create the HPSM Req JSON
-	out, err := json.Marshal(req)
-	//Request HPSM via CURL
-	hpsm := u.Curl_HPSM("http://ns3193417.ip-152-228-225.eu:8081", string(out))
-	//return scan results + HPSM
-	fmt.Printf("{\"results\":%s\n,\"HPSM\": %s}", string(aux), hpsm)
 
 }

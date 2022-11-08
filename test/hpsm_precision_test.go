@@ -62,14 +62,14 @@ func TestInverseSnippetOrder(t *testing.T) {
 	snippet2 := "sn20\nsn21\nsn22\nsn23\nfinsn2\n"
 
 	local := "Line1\nLine2\n" + snippet1 + "line3\nline4\n" + snippet2
+	//local "Line1\nLine2\nsn10\nsn11\nsn12\nsn13\nfinsn1\nline3\nline4\nsn20\nsn21\nsn22\nsn23\nfinsn2\n
+	//remote Line0\sn20\nsn21\nsn22\nsn23\nfinsn2\nsn10\nsn11\nsn12\nsn13\nfinsn1\n
 	remote := "Line0\n" + snippet2 + snippet1
 	hashLocal := proc.GetLineHashesFromSource(local)
 	hashRemote := proc.GetLineHashesFromSource(remote)
 	r := proc.Compare(hashLocal, hashRemote, 5)
-
-	//	got := len(r)
-	//	if got != 2
-	{
+	got := len(r)
+	if got != 2 {
 		t.Errorf("Expected: %v, got: %v", 2, r)
 	}
 
