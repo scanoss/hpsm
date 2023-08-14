@@ -1,8 +1,10 @@
 package process
 
 import (
+	"bytes"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/sigurn/crc8"
 	model "scanoss.com/hpsm/model"
@@ -55,7 +57,7 @@ func GetLineHashesFromSource(src string) []uint8 {
 // Normalize the line
 // It will remove any character that is not a letter or a
 // number included spaces, line feeds and tabs
-func Normalize(line string) string {
+func NormalizeOld(line string) string {
 
 	var out string = ""
 
@@ -67,6 +69,22 @@ func Normalize(line string) string {
 		}
 	}
 	return out
+
+}
+
+func Normalize(line string) string {
+
+	var buffer bytes.Buffer
+	//var out string = ""
+
+	for i := 0; i < len(line); i++ {
+		if (line[i] >= '0' && line[i] <= '9') || (line[i] >= 'a' && line[i] <= 'z') {
+			buffer.WriteByte(line[i])
+		} else if line[i] >= 'A' && line[i] <= 'Z' {
+			buffer.WriteByte(line[i])
+		}
+	}
+	return buffer.String()
 
 }
 
@@ -108,7 +126,9 @@ func getSnippetsStarting(line uint32, localHashes []uint8, remoteHashes []uint8,
 // Compare search sequences of codes of local on the remote.
 // A sequence is considered matched if at least reaches the Threshold
 func Compare(local []uint8, remote []uint8, Threshold uint32) []model.Range {
-	var ranges []model.Range
+	var ranges1 []model.Range
+	var ranges2 []model.Range
+
 	if Threshold == 0 {
 		Threshold = 5
 	}
@@ -135,14 +155,56 @@ func Compare(local []uint8, remote []uint8, Threshold uint32) []model.Range {
 		}
 
 	}
-	for j = 0; j < len(local); {
-		a, err := getSnippetsStarting(uint32(j), local, remote, remoteMap, Threshold)
-		if err == 0 {
-			ranges = append(ranges, a)
-			j = a.LEnd + 1
-		} else {
-			j++
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		for j := 0; j < len(local)/3; {
+			a, err := getSnippetsStarting(uint32(j), local, remote, remoteMap, Threshold)
+			if err == 0 {
+				ranges1 = append(ranges1, a)
+				j = a.LEnd + 1
+			} else {
+				j++
+			}
 		}
+		wg.Done()
+	}()
+	go func() {
+		for j := len(local)/2 + 1; j < len(local); {
+			a, err := getSnippetsStarting(uint32(j), local, remote, remoteMap, Threshold)
+			if err == 0 {
+				ranges2 = append(ranges2, a)
+				j = a.LEnd + 1
+			} else {
+				j++
+			}
+		}
+		wg.Done()
+	}()
+	wg.Wait()
+	finalRange := []model.Range{}
+	l1 := len(ranges1)
+	l2 := len(ranges2)
+
+	if l1 > 0 && l2 > 0 {
+		if ranges1[l1-1].REnd == ranges2[0].REnd {
+
+			finalRange = append(ranges1, ranges2[1:]...)
+		} else {
+			finalRange = append(ranges1, ranges2...)
+		}
+
 	}
-	return ranges
+	/*
+		for j = 0; j < len(local); {
+			a, err := getSnippetsStarting(uint32(j), local, remote, remoteMap, Threshold)
+			if err == 0 {
+				ranges = append(ranges, a)
+				j = a.LEnd + 1
+			} else {
+				j++
+			}
+		}*/
+	//os.WriteFile("out.txt", []byte(fmt.Sprint(ranges1, "\n", ranges2, "\n", finalRange)), 0600)
+	return finalRange
 }

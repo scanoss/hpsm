@@ -1,0 +1,21 @@
+// file.proto
+syntax = "proto3";
+
+package hpsmgprpc;
+option go_package = "scanoss.com/hpsm";
+
+service HPSM {
+  rpc ProcessHashes (HPSMRequest) returns (RangeResponse);
+}
+
+message HPSMRequest {
+  bytes data = 1;
+  string md5 = 2;
+}
+
+message RangeResponse {
+  string local = 1;
+  string remote = 2;
+  string matched = 3;
+
+}

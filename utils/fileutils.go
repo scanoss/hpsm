@@ -2,19 +2,53 @@ package utils
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
-func Wget(url string, filepath string) error {
+func WgetOld(url string, filepath string) error {
 	// run shell `wget URL -O filepath`
 	//fmt.Printf("downloading %s -> %s\n", url, filepath)
 	cmd := exec.Command("wget", url, "-O", filepath, "-T", "10")
 	return cmd.Run()
 }
+
+func Wget(url string, filepath string) error {
+
+	out, err := os.Create(filepath)
+
+	if err != nil {
+		return err
+	}
+	http.DefaultClient.Timeout = 120 * time.Second
+	//fmt.Println(http.DefaultClient.Timeout)
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Error downloading ", err)
+		return err
+	}
+
+	defer resp.Body.Close()
+	// Check server response
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("%d", resp.StatusCode)
+	}
+
+	// Writer the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+
+		return fmt.Errorf("error copying")
+	}
+	out.Close()
+	return nil
+}
+
 func Mkdir(path string) error {
 	cmd := exec.Command("mkdir", "-p", path)
 	cmd.Stdout = os.Stdout

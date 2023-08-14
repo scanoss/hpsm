@@ -10,6 +10,7 @@ package main
 */
 import "C"
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -17,7 +18,9 @@ import (
 	"strconv"
 	"unsafe"
 
+	"google.golang.org/grpc"
 	m "scanoss.com/hpsm/API/go"
+	pb "scanoss.com/hpsm/API/grpc"
 	"scanoss.com/hpsm/model"
 	proc "scanoss.com/hpsm/pkg"
 	u "scanoss.com/hpsm/utils"
@@ -71,6 +74,46 @@ func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 	}
 
 	MD5 := C.GoString(md5)
+	conn, err := grpc.Dial("51.255.68.110:51015", grpc.WithInsecure())
+	if err != nil {
+		fmt.Printf("Failed to connect: %v", err)
+		return C.struct_ranges{}
+	}
+	defer conn.Close()
+
+	client := pb.NewHPSMClient(conn)
+
+	//hashes := hpsm.GetLineHashes(os.Args[1])
+	//md5 := os.Args[2]
+
+	response, err := client.ProcessHashes(context.Background(), &pb.HPSMRequest{Data: crcSource, Md5: MD5})
+	if err != nil {
+		fmt.Printf("Failed to process: %v", err)
+		return C.struct_ranges{}
+	}
+	var lines C.struct_ranges
+	lines.local = ((*C.char)(C.CString(response.Local)))
+	lines.remote = ((*C.char)(C.CString(response.Remote)))
+	/*fmt.Printf("Local: %s\n", response.Local)
+	fmt.Printf("Remote: %s\n", response.Remote)
+	fmt.Printf("Matched: %s\n", response.Matched)*/
+	return lines
+}
+
+/*func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
+	dataArray := C.GoString(data)
+	var crcSource []byte
+
+	for i := 0; i < len(dataArray)-2; i += 2 {
+		var thisString string
+		thisString = dataArray[i : i+2]
+		thisByte, err := strconv.ParseInt(thisString, 16, 9)
+		if err == nil {
+			crcSource = append(crcSource, byte(thisByte))
+		}
+	}
+
+	MD5 := C.GoString(md5)
 	//Remote access
 	strLinesGo := ""
 	ossLinesGo := ""
@@ -107,7 +150,38 @@ func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 	return lines
 
 }
+*/
+//export ProcessHPSM
+func ProcessHPSM(data *C.uchar, length C.int, md5 *C.char) C.struct_ranges {
+	hashes := Go_handleData(data, length)
+	MD5 := C.GoString(md5)
+	conn, err := grpc.Dial("168.119.136.95:51015", grpc.WithInsecure())
+	if err != nil {
+		fmt.Printf("Failed to connect: %v", err)
+		return C.struct_ranges{}
+	}
+	defer conn.Close()
 
+	client := pb.NewHPSMClient(conn)
+
+	//hashes := hpsm.GetLineHashes(os.Args[1])
+	//md5 := os.Args[2]
+
+	response, err := client.ProcessHashes(context.Background(), &pb.HPSMRequest{Data: hashes, Md5: MD5})
+	if err != nil {
+		fmt.Printf("Failed to process: %v", err)
+		return C.struct_ranges{}
+	}
+	var lines C.struct_ranges
+	lines.local = ((*C.char)(C.CString(response.Local)))
+	lines.remote = ((*C.char)(C.CString(response.Remote)))
+	/*fmt.Printf("Local: %s\n", response.Local)
+	fmt.Printf("Remote: %s\n", response.Remote)
+	fmt.Printf("Matched: %s\n", response.Matched)*/
+	return lines
+}
+
+/*
 //export ProcessHPSM
 func ProcessHPSM(data *C.uchar, length C.int, md5 *C.char) C.struct_ranges {
 	dataArray := Go_handleData(data, length)
@@ -136,7 +210,7 @@ func ProcessHPSM(data *C.uchar, length C.int, md5 *C.char) C.struct_ranges {
 
 	return lines
 
-}
+}*/
 
 func remoteProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model.Range {
 
