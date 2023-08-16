@@ -26,9 +26,13 @@ func (s *server) ProcessHashes(ctx context.Context, req *pb.HPSMRequest) (*pb.Ra
 	hashLocal := req.Data
 
 	snippets := proc.Compare(hashLocal, hashRemote, uint32(5))
+	matchedLines := 0
+	totalLines := len(hashLocal)
 	for i := range snippets {
 		var ossRange string
 		var srcRange string
+
+		matchedLines += (snippets[i].LEnd - snippets[i].LStart)
 		srcRange = fmt.Sprintf("%d-%d", snippets[i].LStart, snippets[i].LEnd)
 		ossRange = fmt.Sprintf("%d-%d", snippets[i].RStart, snippets[i].REnd)
 		strLinesGo += ossRange
@@ -37,10 +41,15 @@ func (s *server) ProcessHashes(ctx context.Context, req *pb.HPSMRequest) (*pb.Ra
 			strLinesGo += ", "
 			ossLinesGo += ", "
 		}
-
+	}
+	mLines := ""
+	if len(snippets) == 0 {
+		mLines = "0%"
+	} else {
+		mLines = fmt.Sprintf("%d%%", matchedLines*100/totalLines)
 	}
 
-	return &pb.RangeResponse{Local: strLinesGo, Remote: ossLinesGo, Matched: "10"}, nil
+	return &pb.RangeResponse{Local: strLinesGo, Remote: ossLinesGo, Matched: mLines}, nil
 }
 func GetMD5Hashes(md5key string) []byte {
 
