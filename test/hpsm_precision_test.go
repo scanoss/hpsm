@@ -2,6 +2,7 @@ package test
 
 /**go test --cover hpsm_precision_test.go*/
 import (
+	"fmt"
 	"testing"
 
 	proc "scanoss.com/hpsm/pkg"
@@ -37,8 +38,11 @@ func TestDetectsDuplicateStart(t *testing.T) {
 	remote := "Line0\nLine1\nLine2\nLine3\nlinexx\nlineyy\nLine0\nLine1\nLine2\nLine3\nline4"
 	hashLocal := proc.GetLineHashesFromSource(local)
 	hashRemote := proc.GetLineHashesFromSource(remote)
-	r := proc.Compare(hashLocal, hashRemote, 5)
-	check := r[0].REnd-r[0].RStart == 4
+	fmt.Println(hashLocal)
+	fmt.Println(hashRemote)
+	r := proc.Compare(hashLocal, hashRemote, 4)
+	fmt.Println(r)
+	check := r[0].REnd-r[0].RStart == 3
 
 	if !check {
 		t.Errorf("%v", r)

@@ -3,19 +3,28 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net"
+	"os"
 	"os/exec"
 
 	"google.golang.org/grpc"
-
-	pb "scanoss.com/hpsm/API/grpc" // Cambia "your_package_path" al directorio donde está tu archivo .proto generado
+	pb "scanoss.com/hpsm/API/grpc"
 	proc "scanoss.com/hpsm/pkg"
 )
 
+type HPSMServiceConfig struct {
+	Port      int   `json:"port,omitempty"`
+	Workers   int   `json:"workers,omitempty"`
+	Threshold int32 `json:"threshold,omitempty"`
+}
 type server struct {
 	pb.HPSMServer
 }
+
+var conf HPSMServiceConfig
 
 func (s *server) ProcessHashes(ctx context.Context, req *pb.HPSMRequest) (*pb.RangeResponse, error) {
 
@@ -25,7 +34,8 @@ func (s *server) ProcessHashes(ctx context.Context, req *pb.HPSMRequest) (*pb.Ra
 	hashRemote := GetMD5Hashes(req.Md5)
 	hashLocal := req.Data
 
-	snippets := proc.Compare(hashLocal, hashRemote, uint32(5))
+	//snippets := proc.Compare(hashLocal, hashRemote, uint32(conf.Threshold))
+	snippets := proc.CompareThreaded(hashLocal, hashRemote, uint32(conf.Threshold), conf.Workers)
 	matchedLines := 0
 	totalLines := len(hashLocal)
 	for i := range snippets {
@@ -59,18 +69,35 @@ func GetMD5Hashes(md5key string) []byte {
 	return proc.GetLineHashesFromSource(string(out))
 
 }
+
 func main() {
-	listen, err := net.Listen("tcp", ":51015")
+
+	portStr := ":51015"
+	if len(os.Args) == 2 {
+		f, err := os.ReadFile(os.Args[1])
+		if err != nil {
+			log.Fatal("Could not open configuration file")
+		}
+		err = json.Unmarshal(f, &conf)
+		if err != nil {
+			log.Fatal("Could not load configuration parameters")
+		}
+		portStr = fmt.Sprintf(":%d", conf.Port)
+	} else {
+		conf.Threshold = 5
+		conf.Workers = 2
+	}
+	listen, err := net.Listen("tcp", portStr)
 	if err != nil {
-		fmt.Printf("Failed to listen: %v", err)
+		log.Printf("Failed to listen: %v", err)
 		return
 	}
 
 	s := grpc.NewServer()
 	pb.RegisterHPSMServer(s, &server{})
 
-	fmt.Println("Server is listening on port 51015")
+	log.Println("Server is listening on port 51015")
 	if err := s.Serve(listen); err != nil {
-		fmt.Printf("Failed to serve: %v", err)
+		log.Printf("Failed to serve: %v", err)
 	}
 }

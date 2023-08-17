@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 
+	"log"
+
 	"google.golang.org/grpc"
 
 	pb "scanoss.com/hpsm/API/grpc"
@@ -18,6 +20,9 @@ func main() {
 		fmt.Printf("Failed to connect: %v", err)
 		return
 	}
+	if len(os.Args) != 3 {
+		log.Fatalf("usage:\n\t client <PathToLocalFile> <RemoteMD5>")
+	}
 	defer conn.Close()
 
 	client := pb.NewHPSMClient(conn)
@@ -26,13 +31,13 @@ func main() {
 	md5 := os.Args[2]
 
 	if err != nil {
-		fmt.Printf("Failed to read file: %v", err)
+		log.Fatalf("Failed to read file: %v", err)
 		return
 	}
 
 	response, err := client.ProcessHashes(context.Background(), &pb.HPSMRequest{Data: hashes, Md5: md5})
 	if err != nil {
-		fmt.Printf("Failed to process: %v", err)
+		log.Fatalf("Failed to process: %v", err)
 		return
 	}
 

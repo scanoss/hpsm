@@ -1,51 +1,48 @@
 package main
 
+/**
+
+This file wraps HPSM functions to be used from another programming language
+creating a shared library (.so or .dll)
+Exported functions:
+- HPSM: Formats an input string into []byte and send it with a MD5 of the OSS file. Computing HPSM is done by a remote server
+- HashFileContents: This auxiliar function is used from a different language to calculate hashes
+
+To build the library:
+go build -o libhpsm.so  -buildmode=c-shared libhpsm.go
+In order to buld a C client with the library
+gcc -v client.c -o client ./libhpsm.so
+*/
+
 /*
  struct ranges{
 	char *local;
 	char *remote;
 	char *matched;
 };
-
 */
 import "C"
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+	"log"
 	"os"
-	"os/exec"
 	"strconv"
+	"time"
 	"unsafe"
 
 	"google.golang.org/grpc"
-	m "scanoss.com/hpsm/API/go"
 	pb "scanoss.com/hpsm/API/grpc"
-	"scanoss.com/hpsm/model"
 	proc "scanoss.com/hpsm/pkg"
-	u "scanoss.com/hpsm/utils"
 )
 
-/**
-go build -o libhpsm.so  -buildmode=c-shared libhpsm.go
-gcc -v client.c -o client ./libhpsm.so
-*/
 // Go_HandleData converts a unsigned char [] C array to an array
 // of GO bytes
-
 func Go_handleData(data *C.uchar, length C.int) []byte {
 	return C.GoBytes(unsafe.Pointer(data), C.int(length))
 }
 
-// Get the file contents of a given url name and place it on
-// file
-func GetFileContent(url string, filepath string) error {
-	// run shell `wget URL -O filepath`
-
-	cmd := exec.Command("wget", url, "-O", filepath, "-T", "10")
-	return cmd.Run()
-}
-
+//Auxiliar function to calculate hashes from a source code
 //export HashFileContents
 func HashFileContents(data *C.char) *C.char {
 	dataArray := C.GoString(data)
@@ -59,14 +56,15 @@ func HashFileContents(data *C.char) *C.char {
 	return C.CString(out)
 }
 
+//Calls HPSM caclulation on a gRPC service. The fist parameter is a HPSM definition (hpsm=zzyyww...) and
+// the second is the key of the file to be compared. Returns a struct interpreted by C containting Ranges and matched percentage
 //export HPSM
 func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 	dataArray := C.GoString(data)
 	var crcSource []byte
 
 	for i := 0; i < len(dataArray)-2; i += 2 {
-		var thisString string
-		thisString = dataArray[i : i+2]
+		thisString := dataArray[i : i+2]
 		thisByte, err := strconv.ParseInt(thisString, 16, 9)
 		if err == nil {
 			crcSource = append(crcSource, byte(thisByte))
@@ -74,9 +72,20 @@ func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 	}
 
 	MD5 := C.GoString(md5)
-	conn, err := grpc.Dial("51.255.68.110:51015", grpc.WithInsecure())
+	serverAddress := os.Getenv("HPSM_URL")
+	if serverAddress == "" {
+		serverAddress = "51.255.68.110:51015"
+	}
+
+	// Configures a context with timeout
+	timeout := 10 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, serverAddress, grpc.WithInsecure())
+
 	if err != nil {
-		fmt.Printf("Failed to connect: %v", err)
+		log.Printf("Failed to connect: %v", err)
 		return C.struct_ranges{}
 	}
 	defer conn.Close()
@@ -85,7 +94,7 @@ func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 
 	response, err := client.ProcessHashes(context.Background(), &pb.HPSMRequest{Data: crcSource, Md5: MD5})
 	if err != nil {
-		fmt.Printf("Failed to process: %v", err)
+		log.Printf("Failed to process: %v", err)
 		return C.struct_ranges{}
 	}
 	var lines C.struct_ranges
@@ -95,168 +104,26 @@ func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 	return lines
 }
 
-/*func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
-	dataArray := C.GoString(data)
-	var crcSource []byte
-
-	for i := 0; i < len(dataArray)-2; i += 2 {
-		var thisString string
-		thisString = dataArray[i : i+2]
-		thisByte, err := strconv.ParseInt(thisString, 16, 9)
-		if err == nil {
-			crcSource = append(crcSource, byte(thisByte))
-		}
-	}
-
-	MD5 := C.GoString(md5)
-	//Remote access
-	strLinesGo := ""
-	ossLinesGo := ""
-	totalLines := len(crcSource)
-	snippets := localProcessHPSM(crcSource, MD5, 5)
-	//replace the above line if API processing is needed
-	//snippets := remoteProcessHPSM(crcSource, MD5, 5)
-	matchedLines := 0
-	for i := range snippets {
-		var ossRange string
-		var srcRange string
-		matchedLines += (snippets[i].LEnd - snippets[i].LStart)
-		srcRange = fmt.Sprintf("%d-%d", snippets[i].LStart+1, snippets[i].LEnd+1)
-		ossRange = fmt.Sprintf("%d-%d", snippets[i].RStart+1, snippets[i].REnd+1)
-		strLinesGo += srcRange
-		ossLinesGo += ossRange
-		if i < len(snippets)-1 {
-			strLinesGo += ", "
-			ossLinesGo += ", "
-		}
-
-	}
-	mLines := ""
-	if totalLines == 0 {
-		mLines = fmt.Sprint("0%")
-	} else {
-		mLines = fmt.Sprintf("%d%%", matchedLines*100/totalLines)
-	}
-	var lines C.struct_ranges
-	lines.local = ((*C.char)(C.CString(strLinesGo)))
-	lines.remote = ((*C.char)(C.CString(ossLinesGo)))
-	lines.matched = ((*C.char)(C.CString(mLines)))
-
-	return lines
-
-}
-*/
 //export ProcessHPSM
 func ProcessHPSM(data *C.uchar, length C.int, md5 *C.char) C.struct_ranges {
 	hashes := Go_handleData(data, length)
 	MD5 := C.GoString(md5)
 	conn, err := grpc.Dial("168.119.136.95:51015", grpc.WithInsecure())
 	if err != nil {
-		fmt.Printf("Failed to connect: %v", err)
+		log.Printf("Failed to connect: %v", err)
 		return C.struct_ranges{}
 	}
 	defer conn.Close()
 
 	client := pb.NewHPSMClient(conn)
-
-	//hashes := hpsm.GetLineHashes(os.Args[1])
-	//md5 := os.Args[2]
-
 	response, err := client.ProcessHashes(context.Background(), &pb.HPSMRequest{Data: hashes, Md5: MD5})
 	if err != nil {
-		fmt.Printf("Failed to process: %v", err)
+		log.Printf("Failed to process: %v", err)
 		return C.struct_ranges{}
 	}
 	var lines C.struct_ranges
 	lines.local = ((*C.char)(C.CString(response.Local)))
 	lines.remote = ((*C.char)(C.CString(response.Remote)))
-	/*fmt.Printf("Local: %s\n", response.Local)
-	fmt.Printf("Remote: %s\n", response.Remote)
-	fmt.Printf("Matched: %s\n", response.Matched)*/
 	return lines
 }
-
-/*
-//export ProcessHPSM
-func ProcessHPSM(data *C.uchar, length C.int, md5 *C.char) C.struct_ranges {
-	dataArray := Go_handleData(data, length)
-	MD5 := C.GoString(md5)
-	//Remote access
-	strLinesGo := ""
-	ossLinesGo := ""
-	snippets := localProcessHPSM(dataArray, MD5, 5)
-	for i := range snippets {
-		var ossRange string
-		var srcRange string
-		srcRange = fmt.Sprintf("%d-%d", snippets[i].LStart, snippets[i].LEnd)
-		ossRange = fmt.Sprintf("%d-%d", snippets[i].RStart, snippets[i].REnd)
-		strLinesGo += ossRange
-		ossLinesGo += srcRange
-		if i < len(snippets)-1 {
-			strLinesGo += ", "
-			ossLinesGo += ", "
-		}
-
-	}
-
-	var lines C.struct_ranges
-	lines.local = ((*C.char)(C.CString(strLinesGo)))
-	lines.remote = ((*C.char)(C.CString(ossLinesGo)))
-
-	return lines
-
-}*/
-
-func remoteProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model.Range {
-
-	var req []m.HpsmReqItem
-	var item m.HpsmReqItem
-	var outRange []model.Range
-	item.MD5 = remoteMd5
-	item.Hashes = local
-	req = append(req, item)
-
-	// Create the HPSM Req JSON
-
-	out, _ := json.Marshal(req)
-	fmt.Println(string(out))
-	//Request HPSM via CURL
-	hpsm := u.RequestHPSM("http://ns3193417.ip-152-228-225.eu:8081", string(out))
-	//return scan results + HPSM
-	var resp []m.HpsmRespItem
-	_ = json.Unmarshal(hpsm, &resp)
-	for i := range resp {
-		snippets := resp[i].Snippets
-		var r model.Range
-
-		for s := range snippets {
-			r.RStart = int(snippets[s].Remote.Start)
-			r.REnd = int(snippets[s].Remote.End)
-			r.LStart = int(snippets[s].Local.Start)
-			r.LEnd = int(snippets[s].Local.End)
-			outRange = append(outRange, r)
-		}
-	}
-	return outRange
-}
-
-func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model.Range {
-	//Remote access to API
-
-	MD5 := remoteMd5
-	srcEndpoint := os.Getenv("SRC_URL")
-	if srcEndpoint == "" {
-		srcEndpoint = "https://osskb.org/api/file_contents/"
-	}
-	err := GetFileContent(srcEndpoint+MD5, "/tmp/"+MD5)
-	if err == nil {
-		hashRemote := proc.GetLineHashes("/tmp/" + MD5)
-		u.Rm("/tmp/" + MD5)
-		return proc.Compare(local, hashRemote, uint32(5))
-	} else {
-		return []model.Range{}
-	}
-
-}
-
 func main() {}

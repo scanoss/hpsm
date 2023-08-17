@@ -1,3 +1,10 @@
+/*
+ This file provides basic functionallity to demostrate HPSM in action
+	It can be used as a CLI.
+	Subcommands:
+	- hash: Calculates HPSM sentence that should be included on a wfp file
+	- compare: Compares two source codes or a source code and a remote MD5 in a splitted screen way
+*/
 package main
 
 // use in your .go code
@@ -6,7 +13,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	proc "scanoss.com/hpsm/pkg"
@@ -16,15 +22,7 @@ import (
 func setColor(c int) {
 	colors := []string{"\033[31m ", "\033[32m", "\033[33m", "\033[34m", "\033[35m", "\033[36m", "\033[37m"}
 
-	fmt.Println(string(colors[c])) /*
-	   fmt.Println(string(colorGreen), "test")
-	   fmt.Println(string(colorYellow), "test")
-	   fmt.Println(string(colorBlue), "test")
-	   fmt.Println(string(colorPurple), "test")
-	   fmt.Println(string(colorWhite), "test")
-	   fmt.Println(string(colorCyan), "test", string(colorReset))
-	   fmt.Println("next")*/
-
+	fmt.Println(string(colors[c]))
 }
 func gotoxy(x, y int) {
 	fmt.Printf("\033[%d;%dH", x, y) // Set cursor position
@@ -44,9 +42,8 @@ func trimLine(line string, maxLen int) string {
 func main() {
 
 	if len(os.Args) < 2 {
-		fmt.Println("Available command")
+		fmt.Println("Available commands")
 		fmt.Println("hash <filename>: gets line hashes in one line from file")
-		fmt.Println("wfp  <filename>: Fingerprints the file and adds the hpsm= line")
 		fmt.Println("compare <localFile> <remoteFile|md5> [MD5]: Compares <localFile> against <remoteFile> or with remote <MD5>.")
 		os.Exit(1)
 	}
@@ -56,27 +53,6 @@ func main() {
 		for i := range hashLocal {
 			fmt.Printf("%02x", hashLocal[i])
 		}
-		os.Exit(0)
-	}
-	if os.Args[1] == "wfp" {
-		cmd := exec.Command("scanoss-py", "wfp", os.Args[2])
-		aux, _ := cmd.Output()
-
-		lines := strings.Split(string(aux), "\n")
-		out := lines[0] + "\n"
-
-		// Unmarshall results
-		hashLocal := proc.GetLineHashes(os.Args[2])
-		out += ("hpsm=")
-		for i := range hashLocal {
-			out += fmt.Sprintf("%02x", hashLocal[i])
-		}
-		out += "\n"
-		for j := 1; j < len(lines); j++ {
-			out += lines[j] + "\n"
-		}
-		fmt.Println(out)
-
 		os.Exit(0)
 	}
 	if os.Args[1] == "compare" {
@@ -104,7 +80,7 @@ func main() {
 
 		hashLocal := proc.GetLineHashes(os.Args[2])
 		hashRemote := proc.GetLineHashesFromSource(string(remote))
-		ranges := proc.Compare(hashLocal, hashRemote, 5)
+		ranges := proc.CompareThreaded(hashLocal, hashRemote, 5, 10)
 		y := 2
 
 		for r := range ranges {

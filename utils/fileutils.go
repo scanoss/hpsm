@@ -11,13 +11,6 @@ import (
 	"time"
 )
 
-func WgetOld(url string, filepath string) error {
-	// run shell `wget URL -O filepath`
-	//fmt.Printf("downloading %s -> %s\n", url, filepath)
-	cmd := exec.Command("wget", url, "-O", filepath, "-T", "10")
-	return cmd.Run()
-}
-
 func Wget(url string, filepath string) error {
 
 	out, err := os.Create(filepath)
@@ -26,7 +19,6 @@ func Wget(url string, filepath string) error {
 		return err
 	}
 	http.DefaultClient.Timeout = 120 * time.Second
-	//fmt.Println(http.DefaultClient.Timeout)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Error downloading ", err)
