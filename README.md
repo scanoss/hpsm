@@ -1,25 +1,19 @@
 # HPSM 
 
-This project defines the functionality to do High Precision Snippet Matching on any file.
+This project defines the functionality to do High Precision Snippet Matching between two text based files.
 The main principle is based on semi brute force search.
 
-* Each line of the file is normalized and then hashed using CRC8.
-* The file with the given MD5 is also hashed.
-* The longest sequence of CRCs is calculated doing greedy advance on local and remote file.
+* Each line of the both files are normalized and then hashed using CRC8.
+* The longest sequence of matching CRCs is calculated doing greedy advance on both files.
 
 The functionality is available by:
-
-* **API**: an endpoint receives a json structure defining a set of <md5><[hashes]> to be processed. The API could be deployed on the sources server or can download the sources from several servers.
-* **libhpsm**: A shared library that provides local processing (by downloading from ossk.org) or remote processing (calling the above mentioned API). It also provides functionallity to hash the content of a file. ("hpsm=01234586787887....")
+* **gRPC Service**: an gRPC resource running on server sources receives an array of hashes and calculates the hashes of a given MD5 key. Then, the calculation is carried out and returns the list of matching ranges
+* **libhpsm**: A shared library that provides local hashing and calls remote processing on the gRPC service. It also provides functionallity to hash the content of a file. ("hpsm=01234586787887....")
 * **CLI**: A simple shell console can be used to:
   * Get the *hpsm=* string to be appended to wfp file
   * Get the *.wfp* file containing the hpsm= string
   * Compare two files in a graphical view. The first file must be local but the second file can be local or a remote MD5
 * **go module** A go package (Coming soon). 
-## Remote Files
-By default, files from *"https://osskb.org/api/file_contents/"* are retrieved. If other sources server is used, the environmental variable **SRC_URL** must be used. Eg:
-  
- ``export  SRC_URL=https://osskb.org/api/file_contents/``
 
   ## Building
  A makefile is provided to automate the building process
@@ -28,7 +22,10 @@ By default, files from *"https://osskb.org/api/file_contents/"* are retrieved. I
   
   creates *libhpsm.so* and *libhpsm.h*. *libhpsm.so* must be placed on **/usr/lib** to make the feature available. *libhpsm.h* should be used by the client application, eg: **inc/** folder
   
+  ``make server`` 
   
+  generate hpsm-service ready to be run on a server that hosts mz files
+
   ``make cli`` 
   
   creates *hpsm* cli application
@@ -42,8 +39,7 @@ By default, files from *"https://osskb.org/api/file_contents/"* are retrieved. I
   
   removes compiled binaries *libhpsm.so* and *hpsm*
   
-  
-  
+
   
  
-&copy; SCANOSS 2018-2022
+&copy; SCANOSS 2018-2023
