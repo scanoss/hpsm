@@ -16,9 +16,9 @@ import (
 )
 
 type HPSMServiceConfig struct {
-	Port      int   `json:"port,omitempty"`
-	Workers   int   `json:"workers,omitempty"`
-	Threshold int32 `json:"threshold,omitempty"`
+	Port      int   `json:"port,omitempty"`      //Port where Service will be running (def: osskb.org)
+	Workers   int   `json:"workers,omitempty"`   //Number of workers doing the calculation (def: 2)
+	Threshold int32 `json:"threshold,omitempty"` //Number of hashes matched to consider a valid range (def: 5)
 }
 type server struct {
 	pb.HPSMServer
@@ -26,6 +26,8 @@ type server struct {
 
 var conf HPSMServiceConfig
 
+//ProcessHashes serves HPSM requests by receiving a list of hashes
+// and the ones of the OSS source code
 func (s *server) ProcessHashes(ctx context.Context, req *pb.HPSMRequest) (*pb.RangeResponse, error) {
 
 	strLinesGo := ""
@@ -61,6 +63,8 @@ func (s *server) ProcessHashes(ctx context.Context, req *pb.HPSMRequest) (*pb.Ra
 
 	return &pb.RangeResponse{Local: strLinesGo, Remote: ossLinesGo, Matched: mLines}, nil
 }
+
+//Extract Hashes from OSS source code with key md5key
 func GetMD5Hashes(md5key string) []byte {
 
 	cmd := exec.Command("scanoss", "-k", md5key)
@@ -69,6 +73,17 @@ func GetMD5Hashes(md5key string) []byte {
 	return proc.GetLineHashesFromSource(string(out))
 
 }
+
+//main function to run gRPC service. By default, service is running on
+//port 51015, using 2 workers to compute and a threshold of 5 lines to consider
+//a matching range. You can overide this configuration by using a
+// configuration file as first parameter of the cli
+// Eg: conf.json
+// {
+//	"port":50050,
+//	"workers": 5,
+//	"threshold": 4
+// }
 
 func main() {
 
