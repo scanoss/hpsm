@@ -3,15 +3,23 @@ VERSION=$(shell ./version.sh)
 BINARY_NAME=hpsm
 LIB_NAME=libhpsm.so
 
+clean: 
+	rm hpsm
+	rm libhpsm.so
+	
+version:  ## Produce Semgrep version text file
+	@echo "Writing version file..."
+	echo $(VERSION) > version.txt
+
+unit_test:  ## Run all unit tests in the pkg folder
+	@echo "Running unit test framework..."
+	go test -v ./test/...
+
 build_lib:
 	go build -o ${LIB_NAME}  -buildmode=c-shared lib/libhpsm.go
 
 build_cli:
 	go build -o ${BINARY_NAME} main.go
-
-clean: 
-	rm hpsm
-	rm libhpsm.so
 
 install:
 	cp ${LIB_NAME} /usr/lib
@@ -20,10 +28,6 @@ install:
 build_amd: version  ## Build an AMD 64 binary
 	@echo "Building AMD binary $(VERSION)..."
 	go build -o ${LIB_NAME}  -buildmode=c-shared lib/libhpsm.go
-	
-version:  ## Produce Semgrep version text file
-	@echo "Writing version file..."
-	echo $(VERSION) > version.txt
 
 package: package_amd  ## Build & Package an AMD 64 binary
 
