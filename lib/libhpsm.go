@@ -39,7 +39,15 @@ func Go_handleData(data *C.uchar, length C.int) []byte {
 func GetFileContent(url string, filepath string) error {
 	// run shell `wget URL -O filepath`
 
-	cmd := exec.Command("wget", url, "-O", filepath, "-T", "10")
+	args := []string{url, "-O", filepath, "-T", "10"}
+
+	// Set X-Session header if SCANOSS_API_TOKEN is present
+	apiToken := os.Getenv("SCANOSS_API_TOKEN")
+	if apiToken != "" {
+		args = append(args, "--header=X-Session: "+apiToken)
+	}
+
+	cmd := exec.Command("wget", args...)
 	return cmd.Run()
 }
 
