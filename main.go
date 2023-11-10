@@ -16,14 +16,7 @@ import (
 func setColor(c int) {
 	colors := []string{"\033[31m ", "\033[32m", "\033[33m", "\033[34m", "\033[35m", "\033[36m", "\033[37m"}
 
-	fmt.Println(string(colors[c])) /*
-	   fmt.Println(string(colorGreen), "test")
-	   fmt.Println(string(colorYellow), "test")
-	   fmt.Println(string(colorBlue), "test")
-	   fmt.Println(string(colorPurple), "test")
-	   fmt.Println(string(colorWhite), "test")
-	   fmt.Println(string(colorCyan), "test", string(colorReset))
-	   fmt.Println("next")*/
+	fmt.Println(string(colors[c]))
 
 }
 func gotoxy(x, y int) {
@@ -86,7 +79,7 @@ func main() {
 		var md5Int [2]uint
 		matched, _ := fmt.Sscanf(os.Args[3], "%16x%16x", &md5Int[0], &md5Int[1])
 		if matched == 2 {
-			srcEndpoint := os.Getenv("SRC_URL")
+			srcEndpoint := os.Getenv("SCANOSS_FILE_CONTENTS_URL")
 			if srcEndpoint == "" {
 				srcEndpoint = "https://osskb.org/api/file_contents/"
 			}

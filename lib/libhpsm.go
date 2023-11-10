@@ -10,14 +10,12 @@ package main
 */
 import "C"
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
 	"unsafe"
 
-	m "scanoss.com/hpsm/API/go"
 	"scanoss.com/hpsm/model"
 	proc "scanoss.com/hpsm/pkg"
 	u "scanoss.com/hpsm/utils"
@@ -41,10 +39,10 @@ func GetFileContent(url string, filepath string) error {
 
 	args := []string{url, "-O", filepath, "-T", "10"}
 
-	// Set X-Session header if SCANOSS_API_TOKEN is present
-	apiToken := os.Getenv("SCANOSS_API_TOKEN")
-	if apiToken != "" {
-		args = append(args, "--header=X-Session: "+apiToken)
+	// Set X-Session header if SCANOSS_API_KEY is present
+	apiKey := os.Getenv("SCANOSS_API_KEY")
+	if apiKey != "" {
+		args = append(args, "--header=X-Session: "+apiKey)
 	}
 
 	cmd := exec.Command("wget", args...)
@@ -146,44 +144,11 @@ func ProcessHPSM(data *C.uchar, length C.int, md5 *C.char) C.struct_ranges {
 
 }
 
-func remoteProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model.Range {
-
-	var req []m.HpsmReqItem
-	var item m.HpsmReqItem
-	var outRange []model.Range
-	item.MD5 = remoteMd5
-	item.Hashes = local
-	req = append(req, item)
-
-	// Create the HPSM Req JSON
-
-	out, _ := json.Marshal(req)
-	fmt.Println(string(out))
-	//Request HPSM via CURL
-	hpsm := u.RequestHPSM("http://ns3193417.ip-152-228-225.eu:8081", string(out))
-	//return scan results + HPSM
-	var resp []m.HpsmRespItem
-	_ = json.Unmarshal(hpsm, &resp)
-	for i := range resp {
-		snippets := resp[i].Snippets
-		var r model.Range
-
-		for s := range snippets {
-			r.RStart = int(snippets[s].Remote.Start)
-			r.REnd = int(snippets[s].Remote.End)
-			r.LStart = int(snippets[s].Local.Start)
-			r.LEnd = int(snippets[s].Local.End)
-			outRange = append(outRange, r)
-		}
-	}
-	return outRange
-}
-
 func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model.Range {
 	//Remote access to API
 
 	MD5 := remoteMd5
-	srcEndpoint := os.Getenv("SRC_URL")
+	srcEndpoint := os.Getenv("SCANOSS_FILE_CONTENTS_URL")
 	if srcEndpoint == "" {
 		srcEndpoint = "https://osskb.org/api/file_contents/"
 	}
