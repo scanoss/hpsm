@@ -28,6 +28,7 @@ install:
 build_amd: version  ## Build an AMD 64 binary
 	@echo "Building AMD binary $(VERSION)..."
 	go build -o ${LIB_NAME}  -buildmode=c-shared lib/libhpsm.go
+	go build -o ${BINARY_NAME} main.go
 
 package: package_amd  ## Build & Package an AMD 64 binary
 
