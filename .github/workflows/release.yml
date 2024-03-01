@@ -9,7 +9,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: debian:bullseye
     steps:
+      - name: Setup build tools
+        run: |
+          apt-get update
+          apt-get install build-essential ca-certificates git -y 
+          update-ca-certificates
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0  # Get tags to allow build script to get build version
