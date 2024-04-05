@@ -62,6 +62,9 @@ func GetLineHashesFromSource(src string) []uint8 {
 			srcChk = append(srcChk, 0xFF)
 			continue
 		}
+		if len(linesSrc[line]) > 4000 {
+			linesSrc[line] = linesSrc[line][:4000]
+		}
 		checksum := crc8.Checksum([]byte(Normalize(linesSrc[line])), table)
 		srcChk = append(srcChk, checksum)
 	}
@@ -73,22 +76,25 @@ func GetLineHashesFromSource(src string) []uint8 {
 // number included spaces, line feeds and tabs
 func Normalize(line string) string {
 
-	var out string = ""
+	var out []byte = make([]byte, len(line))
+	j := 0
 
 	for i := 0; i < len(line); i++ {
 		if (line[i] >= '0' && line[i] <= '9') || (line[i] >= 'a' && line[i] <= 'z') {
-			out += string(line[i])
+			out[j] = line[i]
+			j++
 		} else if line[i] >= 'A' && line[i] <= 'Z' {
-			out += strings.ToLower(string(line[i]))
+			out[j] = line[i] - 0x10
+			j++
 		}
 	}
-	return out
+	out = out[:j]
+	return string(out)
 
 }
 
 // Get the longest snippet in the remote file that starts with a specific
 // line in the local. A threshold must be reached to be considered as a match
-//
 func getSnippetsStarting(line uint32, localHashes []uint8, remoteHashes []uint8, remoteMap map[uint8][]uint32, Threshold uint32) (model.Range, int) {
 	var snippet model.Range
 	localStart := line
