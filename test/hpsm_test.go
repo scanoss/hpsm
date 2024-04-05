@@ -87,3 +87,23 @@ func TestDetectsThreshold(t *testing.T) {
 	}
 
 }
+func TestWithLongLineTrimmed(t *testing.T) {
+	expected := true
+	local := "This is line 1\nThis is line 2\nThis is line 3\nThis is line 4\n,This is line 5\n"
+	remote := "This is line 1\nThis is line 2\nThis is line 3\nThis is line 4\n"
+	newVeryLongLine := []byte{}
+	for k := 0; k < 4002; k++ {
+		newVeryLongLine = append(newVeryLongLine, []byte("hello")...)
+	}
+	local = string(newVeryLongLine) + local
+
+	hashLocal := proc.GetLineHashesFromSource(local)
+	hashRemote := proc.GetLineHashesFromSource(remote)
+	r := proc.Compare(hashLocal, hashRemote, 5)
+
+	got := len(r)
+	if got != 1 {
+		t.Errorf("Expected: %v, got: %v", expected, got)
+	}
+
+}

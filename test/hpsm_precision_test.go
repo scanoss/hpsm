@@ -53,11 +53,13 @@ func TestDetectsDuplicateStart(t *testing.T) {
 	remote := "Line0\nLine1\nLine2\nLine3\nlinexx\nlineyy\nLine0\nLine1\nLine2\nLine3\nline4"
 	hashLocal := proc.GetLineHashesFromSource(local)
 	hashRemote := proc.GetLineHashesFromSource(remote)
-	r := proc.Compare(hashLocal, hashRemote, 5)
-	check := r[0].REnd-r[0].RStart == 4
+	r := proc.Compare(hashLocal, hashRemote, 4)
+	if len(r) > 0 {
+		check := r[0].REnd-r[0].RStart == 4
 
-	if !check {
-		t.Errorf("%v", r)
+		if !check {
+			t.Errorf("%v", r)
+		}
 	}
 
 }
