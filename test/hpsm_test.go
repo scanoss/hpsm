@@ -95,11 +95,11 @@ func TestWithLongLineTrimmed(t *testing.T) {
 	for k := 0; k < 4002; k++ {
 		newVeryLongLine = append(newVeryLongLine, []byte("hello")...)
 	}
-	local = string(newVeryLongLine) + local
+	local = local + "\n" + string(newVeryLongLine)
 
 	hashLocal := proc.GetLineHashesFromSource(local)
 	hashRemote := proc.GetLineHashesFromSource(remote)
-	r := proc.Compare(hashLocal, hashRemote, 5)
+	r := proc.Compare(hashLocal, hashRemote, 4)
 
 	got := len(r)
 	if got != 1 {
