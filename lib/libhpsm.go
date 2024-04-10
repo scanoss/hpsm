@@ -166,15 +166,22 @@ func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model
 	MD5 := remoteMd5
 	srcEndpoint := os.Getenv("SCANOSS_FILE_CONTENTS_URL")
 	if srcEndpoint == "" {
-		srcEndpoint = "https://osskb.org/api/file_contents/"
+		srcEndpoint = "https://api.osskb.org/file_contents/"
 	}
 	err := GetFileContent(srcEndpoint+MD5, "/tmp/"+MD5)
+
 	if err == nil {
 		hashRemote := proc.GetLineHashes("/tmp/" + MD5)
+		if len(hashRemote) <= 5 {
+			r := model.Range{LStart: -1, LEnd: -1, RStart: -1, REnd: -1}
+			return []model.Range{r}
+		}
+
 		u.Rm("/tmp/" + MD5)
 		return proc.Compare(local, hashRemote, uint32(5))
 	} else {
-		return []model.Range{}
+		r := model.Range{LStart: -1, LEnd: -1, RStart: -1, REnd: -1}
+		return []model.Range{r}
 	}
 
 }
