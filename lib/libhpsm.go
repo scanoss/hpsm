@@ -166,7 +166,7 @@ func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model
 	MD5 := remoteMd5
 	srcEndpoint := os.Getenv("SCANOSS_FILE_CONTENTS_URL")
 	if srcEndpoint == "" {
-		srcEndpoint = "https://api.osskb.org/file_contents/"
+		srcEndpoint = "localhost/api/file_contents/"
 	}
 	err := GetFileContent(srcEndpoint+MD5, "/tmp/"+MD5)
 
