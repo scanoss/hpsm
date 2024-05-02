@@ -18,9 +18,9 @@ The functionality is available by:
 * **go module** A go package (Coming soon).
 
 ## Remote Files
-By default, files from *"https://osskb.org/api/file_contents/"* are retrieved. If other sources server is used, the environmental variable **SCANOSS_FILE_CONTENTS_URL** must be used. Eg:
+By default, files from *localhost/api/file_contents* are retrieved. If other sources server is used, the environment variable **SCANOSS_FILE_CONTENTS_URL** must be used. Eg:
   
- ``export  SCANOSS_FILE_CONTENTS_URL=https://osskb.org/api/file_contents/``
+ ``export  SCANOSS_FILE_CONTENTS_URL=https://api.scanoss.com/file_contents/``
 
 You can also set the environmental variable `SCANOSS_API_KEY` that will be passed as the `X-Session` header.
 
