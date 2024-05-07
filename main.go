@@ -81,7 +81,7 @@ func main() {
 		if matched == 2 {
 			srcEndpoint := os.Getenv("SCANOSS_FILE_CONTENTS_URL")
 			if srcEndpoint == "" {
-				srcEndpoint = "https://osskb.org/api/file_contents/"
+				srcEndpoint = "http://localhost:5443/file_contents/"
 			}
 			utils.Wget(srcEndpoint+os.Args[3], "/tmp/"+os.Args[3])
 			remote, _ = os.ReadFile("/tmp/" + os.Args[3])

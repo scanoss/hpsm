@@ -160,13 +160,13 @@ func ProcessHPSM(data *C.uchar, length C.int, md5 *C.char) C.struct_ranges {
 
 }
 
+// Default url from https://github.com/scanoss/api.go/blob/main/config/app-config-prod.json
 func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model.Range {
 	//Remote access to API
-
 	MD5 := remoteMd5
 	srcEndpoint := os.Getenv("SCANOSS_FILE_CONTENTS_URL")
 	if srcEndpoint == "" {
-		srcEndpoint = "localhost/api/file_contents/"
+		srcEndpoint = "http://localhost:5443/file_contents/"
 	}
 	err := GetFileContent(srcEndpoint+MD5, "/tmp/"+MD5)
 
