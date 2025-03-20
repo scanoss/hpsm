@@ -168,6 +168,7 @@ func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model
 	if srcEndpoint == "" {
 		srcEndpoint = "http://localhost:5443/file_contents/"
 	}
+	srcEndpoint = u.NormalizeSourceURL(srcEndpoint)
 	err := GetFileContent(srcEndpoint+MD5, "/tmp/"+MD5)
 
 	if err == nil {
