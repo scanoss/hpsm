@@ -83,6 +83,7 @@ func main() {
 			if srcEndpoint == "" {
 				srcEndpoint = "http://localhost:5443/file_contents/"
 			}
+			srcEndpoint = utils.NormalizeSourceURL(srcEndpoint)
 			utils.Wget(srcEndpoint+os.Args[3], "/tmp/"+os.Args[3])
 			remote, _ = os.ReadFile("/tmp/" + os.Args[3])
 			utils.Rm("/tmp/" + os.Args[3])
