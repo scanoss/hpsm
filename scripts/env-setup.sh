@@ -9,18 +9,18 @@
 ################################################################
 
 if [ "$1" = "-h" ] || [ "$1" = "-help" ] ; then
-  echo "$0 [-help] [-y]"
+  echo "$0 [-help] [-f]"
   echo "   Setup and copy the relevant files into place on a server to run the SCANOSS HPSM Feature"
-  echo "   -y    Accept all prompts automatically (non-interactive mode)"
+  echo "   -f    force installation (accept all prompts)"
   exit 1
 fi
 
 export B_PATH=/usr/local/bin/
 export L_PATH=/usr/local/lib/
 
-# Check for -y flag
+# Check for -f flag
 ACCEPT_ALL=false
-if [ "$1" = "-y" ] ; then
+if [ "$1" = "-f" ] ; then
   ACCEPT_ALL=true
 fi
 
