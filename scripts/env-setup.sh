@@ -9,13 +9,20 @@
 ################################################################
 
 if [ "$1" = "-h" ] || [ "$1" = "-help" ] ; then
-  echo "$0 [-help]"
+  echo "$0 [-help] [-y]"
   echo "   Setup and copy the relevant files into place on a server to run the SCANOSS HPSM Feature"
+  echo "   -y    Accept all prompts automatically (non-interactive mode)"
   exit 1
 fi
 
 export B_PATH=/usr/local/bin/
 export L_PATH=/usr/local/lib/
+
+# Check for -y flag
+ACCEPT_ALL=false
+if [ "$1" = "-y" ] ; then
+  ACCEPT_ALL=true
+fi
 
 # Makes sure the scanoss user exists
 export RUNTIME_USER=scanoss
@@ -29,13 +36,18 @@ if [ "$EUID" -ne 0 ] ; then
   echo "Please run as root"
   exit 1
 fi
-read -p "Install SCANOSS HPSM (y/n) [n]? " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]] ; then
+if [ "$ACCEPT_ALL" = true ] ; then
+  echo "Auto-accepting installation (non-interactive mode)..."
   echo "Starting installation..."
 else
-  echo "Stopping."
-  exit 1
+  read -p "Install SCANOSS HPSM (y/n) [n]? " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]] ; then
+    echo "Starting installation..."
+  else
+    echo "Stopping."
+    exit 1
+  fi
 fi
 
 # Setup the service on the system (defaulting to service name without environment)
