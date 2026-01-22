@@ -97,7 +97,14 @@ func HPSM(data *C.char, md5 *C.char) C.struct_ranges {
 	strLinesGo := ""
 	ossLinesGo := ""
 	totalLines := len(crcSource)
-	snippets := localProcessHPSM(crcSource, MD5, 5)
+	snippets, err := localProcessHPSM(crcSource, MD5, 5)
+	if err != nil {
+		var errorRanges C.struct_ranges
+		errorRanges.local = C.CString("-1")
+		errorRanges.remote = C.CString("-1")
+		errorRanges.matched = C.CString("-1%")
+		return errorRanges
+	}
 	//replace the above line if API processing is needed
 	//snippets := remoteProcessHPSM(crcSource, MD5, 5)
 	matchedLines := 0
@@ -137,7 +144,14 @@ func ProcessHPSM(data *C.uchar, length C.int, md5 *C.char) C.struct_ranges {
 	//Remote access
 	strLinesGo := ""
 	ossLinesGo := ""
-	snippets := localProcessHPSM(dataArray, MD5, 5)
+	snippets, error := localProcessHPSM(dataArray, MD5, 5)
+	if error != nil {
+		var errorRanges C.struct_ranges
+		errorRanges.local = C.CString("-1")
+		errorRanges.remote = C.CString("-1")
+		errorRanges.matched = C.CString("-1%")
+		return errorRanges
+	}
 	for i := range snippets {
 		var ossRange string
 		var srcRange string
@@ -161,7 +175,7 @@ func ProcessHPSM(data *C.uchar, length C.int, md5 *C.char) C.struct_ranges {
 }
 
 // Default url from https://github.com/scanoss/api.go/blob/main/config/app-config-prod.json
-func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model.Range {
+func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) ([]model.Range, error) {
 	//Remote access to API
 	MD5 := remoteMd5
 	srcEndpoint := os.Getenv("SCANOSS_FILE_CONTENTS_URL")
@@ -174,15 +188,13 @@ func localProcessHPSM(local []uint8, remoteMd5 string, Threshold uint32) []model
 	if err == nil {
 		hashRemote := proc.GetLineHashes("/tmp/" + MD5)
 		if len(hashRemote) <= 5 {
-			r := model.Range{LStart: -1, LEnd: -1, RStart: -1, REnd: -1}
-			return []model.Range{r}
+			return []model.Range{}, fmt.Errorf("remote file too small or not found")
 		}
 
 		u.Rm("/tmp/" + MD5)
-		return proc.Compare(local, hashRemote, uint32(5))
+		return proc.Compare(local, hashRemote, uint32(5)), nil
 	} else {
-		r := model.Range{LStart: -1, LEnd: -1, RStart: -1, REnd: -1}
-		return []model.Range{r}
+		return []model.Range{}, fmt.Errorf("remote file not found or inaccessible")
 	}
 
 }
